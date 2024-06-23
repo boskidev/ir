@@ -1,20 +1,34 @@
 import os
 import re
 from .Read import read_doc_file
+
+# Function to read all documents
 def read_documents():
-    list_files=['1.doc','2.doc','3.doc','4.doc','5.doc','6.doc','7.doc','8.doc','9.doc','M0.doc','M1.doc','M2.doc','M3.doc','M4.doc','M5.doc','M6.doc','M7.doc','M8.doc','M9.doc','M10.doc','M11.doc','M12.doc',]
+    list_files = [
+        '1.doc', '2.doc', '3.doc', '4.doc', '5.doc', '6.doc', '7.doc', '8.doc', '9.doc',
+        'M0.doc', 'M1.doc', 'M2.doc', 'M3.doc', 'M4.doc', 'M5.doc', 'M6.doc', 'M7.doc',
+        'M8.doc', 'M9.doc', 'M10.doc', 'M11.doc', 'M12.doc'
+    ]
     documents = {}
     for file in list_files:
-             
-            documents[file] = read_doc_file(file)
+        document_text = read_doc_file(file)
+        if document_text is not None:
+            documents[file] = document_text
+        else:
+            print(f"Warning: Failed to read {file}. Skipping.")
+
     return documents
 
+# Function to preprocess text
 def preprocess(text):
+    if text is None:
+        return set()  # Return an empty set if text is None
     text = text.lower()
     text = re.sub(r"[^\w\s]", "", text)
     words = text.split()
     return set(words)
 
+# Function to create inverted index
 def create_index(documents):
     index = {}
     for doc, text in documents.items():
@@ -23,6 +37,7 @@ def create_index(documents):
             index.setdefault(word, []).append(doc)
     return index
 
+# Function to parse query
 def parse_query(query):
     query = preprocess(query)
     stack = []
@@ -37,6 +52,7 @@ def parse_query(query):
     while stack:
         yield stack.pop()
 
+# Function to evaluate query
 def evaluate_query(query, index):
     query = parse_query(query)
     stack = []
@@ -50,7 +66,7 @@ def evaluate_query(query, index):
                 b = stack.pop()
             else:
                 b = set()
-             
+
             if word == "not":
                 stack.append(a - b)
             elif word == "and":
@@ -61,18 +77,14 @@ def evaluate_query(query, index):
             stack.append(set(index.get(word, [])))
     return stack.pop() if stack else set()
 
-# Read the documents from a folder
-documents = read_documents()
+# Function to display query results
+def show(query):
+    # Read the documents from a folder
+    documents = read_documents()
 
-# Create an inverted index from the documents
-index = create_index(documents)
+    # Create an inverted index from the documents
+    index = create_index(documents)
 
-
-
-def show( query):
     result = evaluate_query(query, index)
     result_text = ", ".join(result) if result else "None"
-    return result_text.encode("utf-8", "replace").decode("utf-8")
-
-
-
+    return result_text
